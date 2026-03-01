@@ -1,0 +1,327 @@
+Model: anthropic:claude-sonnet-4-6
+
+## Question 1
+**Question:** What does the PhotoEye_Fill sensor do?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 8.75s
+
+**Answer:**
+**PhotoEye_Fill** is a photoeye sensor located at the fill station. It outputs TRUE when a box is present at that station.
+
+--- Judge evaluation ---
+Score: 98/100
+
+Summary: The generated answer accurately covers all key details from the reference: sensor type, location, detection condition, and output behavior. The phrasing is slightly more concise but conveys the same meaning with no missing or incorrect content.
+
+  Criterion            In Reference                                       In Generated                                       Match  
+------------------------------------------------------------------------------------------------------------------------------------
+  Sensor type          Photoeye sensor                                    Photoeye sensor                                    Yes    
+  Location             Located at the fill station                        Located at the fill station                        Yes    
+  Detection condition  Detects when a box is present at the fill station  Detects when a box is present at the fill station  Yes    
+  Output behavior      Outputs TRUE when a box is detected                Outputs TRUE when a box is present                 Yes    
+
+---
+## Question 2
+**Question:** What are all the fault codes and what do they mean?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 13.68s
+
+**Answer:**
+Here are all the fault codes for this system:
+
+- **0** – No fault; everything is running normally.
+- **1** – Emergency stop was pressed.
+- **2** – A safety gate was opened.
+- **3** – Fill timeout — the box didn't fill up within 5 seconds.
+- **4** – Seal timeout — the seal cylinder didn't extend within 3 seconds.
+- **5** – The seal cylinder didn't retract within 3 seconds.
+
+The current active fault is stored in the **Fault_Code** tag. When it's 0, there's no problem. Any other value points to a specific issue you can look up here. The **Fault_Active** tag will be TRUE whenever a fault is present, and the red stack light and HMI fault indicator will also be lit.
+
+--- Judge evaluation ---
+Score: 100/100
+
+Summary: The generated answer correctly covers all six fault codes (0–5) with accurate descriptions that match the reference, including specific timeout durations. It also provides additional accurate context about the Fault_Code tag, Fault_Active tag, and hardware indicators, which are helpful extras that do not detract from the score.
+
+  Criterion                             In Reference                                             In Generated                                                  Match  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Fault Code 0 meaning                  No fault                                                 No fault; everything is running normally                      Yes    
+  Fault Code 1 meaning                  Emergency stop pressed                                   Emergency stop was pressed                                    Yes    
+  Fault Code 2 meaning                  Safety gate opened                                       A safety gate was opened                                      Yes    
+  Fault Code 3 meaning                  Fill timeout (box not full within 5 seconds)             Fill timeout — the box didn't fill up within 5 seconds        Yes    
+  Fault Code 4 meaning                  Seal timeout (cylinder did not extend within 3 seconds)  Seal timeout — the seal cylinder didn't extend within 3 sec…  Yes    
+  Fault Code 5 meaning                  Seal cylinder did not retract within 3 seconds           The seal cylinder didn't retract within 3 seconds             Yes    
+  Fault_Code tag explanation            Not mentioned                                            Active fault stored in Fault_Code tag; 0 means no problem     Extra  
+  Fault_Active tag explanation          Not mentioned                                            Fault_Active tag is TRUE whenever a fault is present          Extra  
+  Stack light / HMI indicator behavior  Not mentioned                                            Red stack light and HMI fault indicator lit when fault is a…  Extra  
+
+---
+## Question 3
+**Question:** What happens when the emergency stop is pressed?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 20.71s
+
+**Answer:**
+When the E-stop is pressed, EmergencyStop goes TRUE, and SafetyCheck immediately kills all three outputs — the conveyor stops, the fill valve closes, and the seal cylinder is de-energized. Fault_Active is set TRUE and Fault_Code is set to 1.
+
+Because Fault_Active is TRUE, MainRoutine calls FaultHandler, which also forces Line_Running to FALSE and double-checks that outputs are off. FaultHandler will retract the seal cylinder if it isn't already home. The red stack light turns on, and the green and yellow lights go off.
+
+To recover, the operator must release the E-stop (so EmergencyStop returns FALSE) and ensure the safety gate is closed, then press the HMI Reset button. Only when both safety conditions are satisfied will SafetyCheck clear the fault, reset Fault_Code to 0, and reset the fill and seal timers.
+
+--- Judge evaluation ---
+Score: 97/100
+
+Summary: The generated answer covers every key fact in the reference — EmergencyStop trigger, SafetyCheck routine, Fault_Active/Fault_Code values, all three outputs turned off, immediate line stop, and red stack light on. It also provides accurate extra detail (FaultHandler behavior, recovery procedure, other stack lights) that goes beyond the reference without contradicting it.
+
+  Criterion                                         In Reference                                      In Generated                                                  Match  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Trigger condition (EmergencyStop = TRUE)          EmergencyStop becomes TRUE triggers the response  EmergencyStop goes TRUE triggers the response                 Yes    
+  Routine responsible (SafetyCheck)                 SafetyCheck routine handles the emergency stop    SafetyCheck immediately handles the emergency stop            Yes    
+  Fault_Active set to TRUE                          Fault_Active is set to TRUE                       Fault_Active is set TRUE                                      Yes    
+  Fault_Code set to 1                               Fault_Code is set to 1                            Fault_Code is set to 1                                        Yes    
+  Conveyor_Run set to FALSE (conveyor stops)        Conveyor_Run set to FALSE                         Conveyor stops (output killed)                                Yes    
+  Fill_Valve set to FALSE (fill valve closes)       Fill_Valve set to FALSE                           Fill valve closes                                             Yes    
+  Seal_Cylinder_Extend set to FALSE (de-energized)  Seal_Cylinder_Extend set to FALSE                 Seal cylinder is de-energized                                 Yes    
+  Line stops immediately                            The line stops immediately                        Implied by all outputs being killed immediately               Yes    
+  Red stack light turns on                          The red stack light turns on                      Red stack light turns on                                      Yes    
+  FaultHandler called / Line_Running set to FALSE   Not mentioned in reference                        MainRoutine calls FaultHandler, which forces Line_Running t…  Extra  
+  Recovery procedure (reset steps)                  Not mentioned in reference                        Detailed recovery steps: release E-stop, close safety gate,…  Extra  
+  Green and yellow lights go off                    Not mentioned in reference                        Green and yellow lights go off                                Extra  
+
+---
+## Question 4
+**Question:** How does the operator reset a fault?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 18.08s
+
+**Answer:**
+To reset a fault, the operator needs to do two things: first, clear the condition that caused the fault (release the e-stop or close the safety gate, depending on what triggered it), then press the **HMI Reset Button**.
+
+The reset logic in `SafetyCheck` checks both conditions together — it will only clear the fault if the e-stop is *not* pressed **and** the safety gate *is* closed at the same time the reset button is pressed. If either safety condition is still bad, pressing the button does nothing.
+
+Once the reset succeeds, `Fault_Active` goes FALSE, `Fault_Code` clears to 0, and both the Fill and Seal timers are reset. The red stack light will turn off, and the HMI fault indicator will clear as well.
+
+--- Judge evaluation ---
+Score: 98/100
+
+Summary: The generated answer accurately covers every key fact from the reference — the HMI Reset Button, the SafetyCheck routine, both safety conditions (e-stop not pressed AND gate closed), the outcomes (Fault_Active → FALSE, Fault_Code → 0, both timers reset), and the behavior when conditions are not met. It also includes extra accurate details (clearing the fault condition first, stack light/HMI indicator feedback) that go beyond the reference without introducing any errors.
+
+  Criterion                                                   In Reference                                      In Generated                                                  Match  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Operator action: press HMI_Reset_Button                     Operator presses the HMI_Reset_Button             Operator presses the HMI Reset Button                         Yes    
+  Routine responsible for reset logic                         SafetyCheck routine checks safety conditions      Reset logic in SafetyCheck checks both conditions             Yes    
+  Safety condition: EmergencyStop not pressed                 EmergencyStop is not pressed                      E-stop is not pressed                                         Yes    
+  Safety condition: Safety_Gate_Closed is TRUE                Safety_Gate_Closed is TRUE                        Safety gate is closed                                         Yes    
+  Both conditions must be met simultaneously                  Both conditions must be met for reset to succeed  Both conditions must be true at the same time the reset but…  Yes    
+  Fault_Active set to FALSE on successful reset               Fault_Active is set to FALSE                      Fault_Active goes FALSE                                       Yes    
+  Fault_Code set to 0 on successful reset                     Fault_Code is set to 0                            Fault_Code clears to 0                                        Yes    
+  Fill_Timer and Seal_Timer reset                             Fill_Timer and Seal_Timer are reset               Both the Fill and Seal timers are reset                       Yes    
+  Reset ignored if safety conditions not met                  If safety conditions not OK, reset is ignored     If either safety condition is still bad, pressing the butto…  Yes    
+  Additional context: clear fault condition before resetting  Not mentioned                                     Operator should first clear the condition that caused the f…  Extra  
+  Additional context: stack light and HMI indicator clear     Not mentioned                                     Red stack light turns off and HMI fault indicator clears      Extra  
+
+---
+## Question 5
+**Question:** What color is the stack light when the machine is in manual mode?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 11.67s
+
+**Answer:**
+When the machine is in manual mode, the **yellow light** turns on.
+
+This happens because `HMI_Manual_Mode` is TRUE, which satisfies the yellow light condition in `StackLightControl` — as long as there's no active fault. The green light won't come on because `Line_Running` is forced to FALSE whenever manual mode is selected, and the green light requires both `Line_Running` to be TRUE and `HMI_Manual_Mode` to be FALSE.
+
+--- Judge evaluation ---
+Score: 100/100
+
+Summary: The generated answer fully matches the reference answer in all key aspects: correct color (yellow), correct routine (StackLightControl), correct triggering condition (HMI_Manual_Mode TRUE), fault exclusion, and reason the green light is off. The generated answer even adds slightly more detail about the green light conditions, which is accurate and adds clarity without contradicting the reference.
+
+  Criterion                                          In Reference                                                  In Generated                                                  Match  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Color of stack light in manual mode                Yellow                                                        Yellow                                                        Yes    
+  Routine responsible (StackLightControl)            StackLightControl routine sets Stack_Light_Yellow to TRUE     StackLightControl routine cited as the source of the yellow…  Yes    
+  Condition for yellow light (HMI_Manual_Mode TRUE)  HMI_Manual_Mode is TRUE triggers yellow light                 HMI_Manual_Mode is TRUE satisfies yellow light condition      Yes    
+  Fault condition exclusion                          Yellow light is on only when not faulted                      Yellow light is on as long as there is no active fault        Yes    
+  Green light is off reason                          Green light is off because Line_Running is FALSE or manual …  Green light off because Line_Running is FALSE when manual m…  Yes    
+
+---
+## Question 6
+**Question:** Walk me through what happens when a box arrives at the fill station.
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 27.08s
+
+**Answer:**
+Here's the sequence of events when a box arrives at the fill station in Auto mode:
+
+1. **PhotoEye_Fill goes TRUE** — the photoeye detects the box at the fill station.
+2. **Box_At_Fill latches TRUE** — but only if a fill isn't already in progress and the box wasn't already registered. This prevents double-triggering.
+3. **Conveyor stops** — because Box_At_Fill is now TRUE, the conveyor logic at the bottom of AutoMode sees that a fill is in progress and sets Conveyor_Run to FALSE.
+4. **Fill_In_Progress goes TRUE and Fill_Timer starts** — the routine kicks off the fill cycle and starts the 5-second timeout clock.
+5. **Fill_Valve opens (TRUE)** — product starts dispensing into the box.
+6. **Two things are now being watched simultaneously:**
+   - **Level_Sensor goes TRUE (normal completion)** — the box is full. Fill_Valve closes, Fill_In_Progress and Box_At_Fill both clear, Fill_Timer resets, and the Conveyor_Delay_Timer starts its 500ms countdown before the conveyor restarts.
+   - **Fill_Timer times out at 5000ms (fault path)** — if the level sensor never triggered, Fill_Valve closes, the fill flags clear, Fault_Active goes TRUE with Fault_Code 3, and Rejected_Box_Count increments by 1. The line faults out at that point.
+7. **Conveyor restarts (normal path only)** — after the 500ms Conveyor_Delay_Timer completes, Conveyor_Run goes back TRUE and the box moves on down the line.
+
+The key safety here is the fill timeout — if a box never fills properly within 5 seconds, the line won't just keep running; it faults and counts the rejection so you know something went wrong.
+
+--- Judge evaluation ---
+Score: 93/100
+
+Summary: The generated answer covers all key steps from the reference accurately and in detail, including the PhotoEye detection, Box_At_Fill latch, fill valve operation, Level_Sensor completion path, timer resets, and 500ms conveyor delay. It also adds accurate extra detail about the fill timeout fault path (Fault_Active, Fault_Code 3, Rejected_Box_Count) not present in the reference. The only minor discrepancy is the ordering of the conveyor stop versus Fill_In_Progress/Fill_Timer initiation, which is swapped compared to the reference sequence.
+
+  Criterion                                                     In Reference                                                  In Generated                                                  Match  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  PhotoEye_Fill detects the box (becomes TRUE)                  PhotoEye_Fill becomes TRUE to detect the box                  PhotoEye_Fill goes TRUE — photoeye detects the box at the f…  Yes    
+  Box_At_Fill latched TRUE                                      Box_At_Fill is latched TRUE                                   Box_At_Fill latches TRUE — with condition that fill isn't a…  Yes    
+  Fill_In_Progress set TRUE and Fill_Timer starts               Fill_In_Progress is set TRUE and Fill_Timer starts            Fill_In_Progress goes TRUE and Fill_Timer starts — 5-second…  Yes    
+  Conveyor_Run set FALSE (conveyor stops)                       Conveyor_Run is set FALSE — conveyor stops                    Conveyor stops — Conveyor_Run set to FALSE because Box_At_F…  Yes    
+  Fill_Valve opens (TRUE) and product dispenses                 Fill_Valve opens (set TRUE) and product dispenses             Fill_Valve opens (TRUE) — product starts dispensing into th…  Yes    
+  Level_Sensor detects box is full — Fill_Valve closes, Fill_…  When Level_Sensor detects full: Fill_Valve closes, Fill_In_…  Level_Sensor goes TRUE (normal completion): Fill_Valve clos…  Yes    
+  Conveyor_Delay_Timer 500ms then conveyor restarts to move b…  After 500ms conveyor delay, conveyor restarts to move box t…  After 500ms Conveyor_Delay_Timer completes, Conveyor_Run go…  Yes    
+  Fill timeout fault path (Fault_Active, Fault_Code, Rejected…  Not mentioned in reference                                    Fill_Timer times out at 5000ms: Fill_Valve closes, flags cl…  Extra  
+  Order of steps — conveyor stop vs. fill initiation            Fill_In_Progress/Fill_Timer (step 3) before Conveyor_Run FA…  Conveyor stop placed before Fill_In_Progress/Fill_Timer sta…  Partial
+
+---
+## Question 7
+**Question:** Why can't you extend the seal cylinder manually while the conveyor is running?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 18.41s
+
+**Answer:**
+In ManualMode, the seal cylinder can only extend when `HMI_Manual_Seal` is held AND `Conveyor_Run` is FALSE. If the conveyor is running at the same time, that condition fails and `Seal_Cylinder_Extend` is forced FALSE.
+
+This is a safety interlock — it prevents the seal cylinder from coming down while boxes (or hands) could still be moving on the belt. You have to release the conveyor jog button before you can trigger the seal manually.
+
+--- Judge evaluation ---
+Score: 97/100
+
+Summary: The generated answer fully captures all key points from the reference — the safety interlock nature, ManualMode context, the Conveyor_Run = FALSE requirement, the Seal_Cylinder_Extend output, and the equipment/safety risk rationale. It also adds accurate extra detail about the HMI_Manual_Seal input and the operator action needed, which do not detract from the score.
+
+  Criterion                                    In Reference                                                  In Generated                                                  Match  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Safety interlock identification              Explicitly called a safety interlock                          Explicitly called a safety interlock                          Yes    
+  Mode condition (ManualMode)                  Applies in ManualMode                                         Applies in ManualMode                                         Yes    
+  Conveyor must be stopped (NOT Conveyor_Run)  Seal cylinder extend only allowed when Conveyor_Run is FALS…  Conveyor_Run must be FALSE for extend to be allowed           Yes    
+  Output signal name (Seal_Cylinder_Extend)    Seal_Cylinder_Extend is the output command                    Seal_Cylinder_Extend is forced FALSE when condition fails     Yes    
+  Risk/consequence explained                   Could damage equipment or product, or create a safety hazard  Prevents seal cylinder coming down while boxes or hands cou…  Yes    
+  HMI_Manual_Seal input condition              Not mentioned in reference                                    HMI_Manual_Seal must be held as an additional condition       Extra  
+  Operator action required                     Not explicitly stated                                         Must release conveyor jog button before triggering seal man…  Extra  
+
+---
+## Question 8
+**Question:** What conditions must be true for the conveyor to run in automatic mode?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 19.03s
+
+**Answer:**
+All of the following must be true:
+
+1. **Line_Running** must be TRUE (operator has pressed Start and the line is active in auto mode)
+2. **HMI_Manual_Mode** must be FALSE (the mode selector is set to Auto, not Manual)
+3. **Fault_Active** must be FALSE (no faults present — e-stop released, safety gate closed)
+4. **Fill_In_Progress** must be FALSE (fill station is not currently dispensing product into a box)
+5. **Seal_In_Progress** must be FALSE (seal station is not currently mid-cycle)
+6. **Conveyor_Delay_Timer** must either not be running, or have already finished its 500ms delay (the post-station delay has elapsed)
+
+In short, the conveyor only runs when the line is healthy and active, and both stations are idle. Any time a box is being filled or sealed, the conveyor stops and waits. After a station completes, there's also a built-in 500ms pause before the conveyor restarts — this is the Conveyor_Delay_Timer. All of this logic lives in the AutoMode routine.
+
+--- Judge evaluation ---
+Score: 97/100
+
+Summary: The generated answer covers all five conditions from the reference answer accurately, elevating the implicit Fault_Active condition to an explicit one (which is correct). It also adds two accurate extra details: HMI_Manual_Mode must be FALSE and a specific 500ms timer duration, neither of which contradict the reference. The phrasing and explanations are clear and consistent with the reference.
+
+  Criterion                                        In Reference                                                  In Generated                                                  Match  
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Line_Running must be TRUE                        Line_Running must be TRUE (operator has pressed start and n…  Line_Running must be TRUE (operator has pressed Start and t…  Yes    
+  Fill_In_Progress must be FALSE                   Fill_In_Progress must be FALSE (not actively filling a box)   Fill_In_Progress must be FALSE (fill station is not current…  Yes    
+  Seal_In_Progress must be FALSE                   Seal_In_Progress must be FALSE (not actively sealing a box)   Seal_In_Progress must be FALSE (seal station is not current…  Yes    
+  Conveyor_Delay_Timer condition                   Conveyor_Delay_Timer must either not be running OR have com…  Conveyor_Delay_Timer must either not be running, or have al…  Yes    
+  Fault_Active must be FALSE (implicit condition)  Implicitly: Fault_Active must be FALSE (otherwise AutoMode …  Fault_Active must be FALSE (no faults present — e-stop rele…  Yes    
+  HMI_Manual_Mode must be FALSE                    Not mentioned in the reference answer                         HMI_Manual_Mode must be FALSE (the mode selector is set to …  Extra  
+  AutoMode routine context                         Fault_Active being FALSE is tied to the AutoMode routine no…  Logic lives in the AutoMode routine — mentioned at the end    Yes    
+  500ms timer detail                               Not specified in reference                                    Specifies 500ms as the delay duration for Conveyor_Delay_Ti…  Extra  
+
+---
+## Question 9
+**Question:** The conveyor won't start even though the line is in auto mode and the operator pressed start. What should I check?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 32.18s
+
+**Answer:**
+Here's what to check, working through the logic in order:
+
+1. **Check for active faults (Fault_Active / Fault_Code).** If any fault is active, MainRoutine jumps straight to FaultHandler and never reaches AutoMode, so the start button is effectively ignored. Check the HMI fault indicator and Fault_Code — code 1 means E-stop is pressed, code 2 means the safety gate is open, code 3 means a fill timeout tripped. Clear the root cause, then press the Reset button.
+
+2. **Check E-stop and safety gate (EmergencyStop, Safety_Gate_Closed).** Even if you try to reset, SafetyCheck will refuse to clear the fault unless EmergencyStop is FALSE and Safety_Gate_Closed is TRUE. Make sure the E-stop is physically released and the guard door is fully closed before resetting.
+
+3. **Confirm Line_Running actually went TRUE.** The start button only sets Line_Running to TRUE if HMI_Start_Button fired while Line_Running was FALSE. If the stop button was pressed in the same scan, or the mode was toggled, it may have been set back to FALSE immediately. Verify on the HMI that Line_Running is TRUE after pressing start.
+
+4. **Check if a fill or seal operation is in progress (Fill_In_Progress, Seal_In_Progress).** In AutoMode, the conveyor logic requires both Fill_In_Progress and Seal_In_Progress to be FALSE before Conveyor_Run goes TRUE. If either station is mid-cycle, the conveyor intentionally stays off.
+
+5. **Check the Conveyor Delay Timer (Conveyor_Delay_Timer).** The conveyor also won't run if this timer is currently timing (enabled but not yet done). It has a 500ms preset and is started after a fill or seal completes — so there may just be a brief delay. If the timer appears stuck enabled, it may not have reset properly.
+
+6. **Confirm the mode selector (HMI_Manual_Mode).** If HMI_Manual_Mode is TRUE, the program runs ManualMode instead of AutoMode, and Line_Running is forced FALSE. In manual, the conveyor only runs while HMI_Manual_Conveyor is held — the start button does nothing.
+
+--- Judge evaluation ---
+Score: 98/100
+
+Summary: The generated answer covers every check listed in the reference (Fault_Active/Fault_Code with codes 1 and 2, Fill_In_Progress, Seal_In_Progress, Conveyor_Delay_Timer at 500ms, Line_Running latch, and HMI_Manual_Mode) with accurate, consistent detail. It also adds extra accurate information not in the reference (fault code 3 for fill timeout, and the SafetyCheck reset prerequisites), which only improves the answer. No reference content is missing or incorrect.
+
+  Criterion                                                     In Reference                                                  In Generated                                                  Match  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Check Fault_Active / Fault_Code                               Check Fault_Active and Fault_Code; if faulted the line won'…  Check Fault_Active / Fault_Code; MainRoutine jumps to Fault…  Yes    
+  E-stop fault code (code 1)                                    Common fault: E-stop pressed = code 1                         Code 1 = E-stop pressed                                       Yes    
+  Safety gate fault code (code 2)                               Common fault: safety gate open = code 2                       Code 2 = safety gate open                                     Yes    
+  Fill timeout fault code (code 3)                              Not mentioned                                                 Code 3 = fill timeout tripped                                 Extra  
+  Fill_In_Progress check                                        If Fill_In_Progress TRUE, conveyor waits                      Fill_In_Progress must be FALSE before Conveyor_Run goes TRUE  Yes    
+  Seal_In_Progress check                                        If Seal_In_Progress TRUE, conveyor waits                      Seal_In_Progress must be FALSE before Conveyor_Run goes TRUE  Yes    
+  Conveyor_Delay_Timer (500ms delay)                            500ms delay after fill or seal completes; timer still runni…  500ms preset timer started after fill or seal completes; co…  Yes    
+  Line_Running latch check                                      Start button is momentary; check if Line_Running is TRUE      Start button sets Line_Running only if conditions met; veri…  Yes    
+  HMI_Manual_Mode check                                         If HMI_Manual_Mode TRUE, system is in manual mode and AutoM…  If HMI_Manual_Mode TRUE, ManualMode runs instead of AutoMod…  Yes    
+  E-stop / safety gate reset prerequisites (EmergencyStop, Sa…  Not mentioned                                                 SafetyCheck won't clear fault unless EmergencyStop is FALSE…  Extra  
+  Overall structure / coverage                                  6 numbered checks covering all primary causes                 6 numbered checks covering all primary causes plus addition…  Yes    
+
+---
+## Question 10
+**Question:** What happens if a box is at the fill station but never gets full?
+**Model:** anthropic:claude-sonnet-4-6
+**Time:** 24.78s
+
+**Answer:**
+If the fill timer runs for 5 seconds (its preset) without the Level_Sensor ever going TRUE, the Fill_Timer fires its done bit and AutoMode treats that as a timeout.
+
+Here's what happens in sequence:
+
+1. Fill_Valve is turned off — product stops dispensing.
+2. Fill_In_Progress and Box_At_Fill are both cleared to FALSE — the fill station resets as if the cycle is over.
+3. Fault_Active is set TRUE and Fault_Code is set to 3 — the line goes into fault.
+4. Rejected_Box_Count increments by 1 — the box is counted as a reject.
+5. Because Fault_Active is now TRUE, MainRoutine jumps straight to FaultHandler and StackLightControl, skipping normal operation.
+6. FaultHandler kills the conveyor and fill valve (already off), and retracts the seal cylinder if it's not already home.
+7. StackLightControl turns the red stack light on and kills green and yellow.
+
+The line will stay faulted until an operator presses the HMI Reset Button **and** the E-stop is cleared and the safety gate is confirmed closed. Note that the under-filled box is not automatically removed — it just gets counted as rejected, so someone will need to deal with it physically.
+
+--- Judge evaluation ---
+Score: 95/100
+
+Summary: The generated answer covers all key facts from the reference (timer duration, trigger condition, DN bit, valve closure, flag resets, fault code, reject count, line stop, red light) with accurate detail. It adds extra accurate information about FaultHandler behavior, StackLightControl, and reset conditions. The only minor gap is the reference explicitly mentions the operator must "investigate and remove the box," whereas the generated answer notes the box isn't automatically removed but frames operator reset conditions slightly differently.
+
+  Criterion                                          In Reference                                                  In Generated                                                  Match  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Fill_Timer duration / preset                       5 seconds (5000ms preset)                                     5 seconds (its preset)                                        Yes    
+  Trigger condition: Level_Sensor never TRUE         If Level_Sensor never becomes TRUE within that time           without the Level_Sensor ever going TRUE                      Yes    
+  Timer DN (done) bit activates                      timer's DN (done) bit activates                               Fill_Timer fires its done bit                                 Yes    
+  Fill_Valve closed                                  Fill_Valve is closed                                          Fill_Valve is turned off                                      Yes    
+  Fill_In_Progress reset to FALSE                    Fill_In_Progress reset to FALSE                               Fill_In_Progress cleared to FALSE                             Yes    
+  Box_At_Fill reset to FALSE                         Box_At_Fill reset to FALSE                                    Box_At_Fill cleared to FALSE                                  Yes    
+  Fault_Active set TRUE                              Fault_Active is set TRUE                                      Fault_Active is set TRUE                                      Yes    
+  Fault_Code set to 3                                Fault_Code 3                                                  Fault_Code is set to 3                                        Yes    
+  Rejected_Box_Count incremented by 1                Rejected_Box_Count is incremented by 1                        Rejected_Box_Count increments by 1                            Yes    
+  Line stops                                         The line stops                                                the line goes into fault; FaultHandler kills the conveyor a…  Yes    
+  Red stack light turns on                           red stack light turns on                                      StackLightControl turns the red stack light on and kills gr…  Yes    
+  Operator action required to reset                  Operator must investigate, remove the box, and reset the fa…  operator presses HMI Reset Button and E-stop is cleared and…  Partial
+  FaultHandler and StackLightControl routing detail  Not mentioned                                                 MainRoutine jumps to FaultHandler and StackLightControl; Fa…  Extra  
+
+---
