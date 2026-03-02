@@ -56,6 +56,10 @@ from pipeline import Pipeline
 from agents.judge import format_judge_result
 from tools.questions_ref import get_question
 
+# ANSI colors for terminal (disabled when stdout is not a TTY)
+def _color(s: str, codes: str) -> str:
+    return (codes + s + "\033[0m") if sys.stdout.isatty() else s
+
 
 def main() -> None:
     project_root = Path(__file__).resolve().parent.parent
@@ -83,7 +87,7 @@ def main() -> None:
             ext = data
             print("\n--- Extraction ---", flush=True)
             print(f"Intent: {ext.intent}", flush=True)
-            print(f"Resolved tags: {ext.resolved_tags}", flush=True)
+            print(f"Resolved tags: inputs={ext.resolved_tags.inputs}, outputs={ext.resolved_tags.outputs}, states={ext.resolved_tags.states}, actions={ext.resolved_tags.actions}", flush=True)
             if ext.unknown_terms:
                 print(f"Unknown terms: {ext.unknown_terms}", flush=True)
         elif stage == "main_callees":
@@ -92,16 +96,23 @@ def main() -> None:
             for label, path in zip(ctx.path_labels, ctx.paths):
                 print(f"  {label}: {' → '.join(path)}", flush=True)
         elif stage == "candidates":
-            grep_count, candidates, selection = data
-            if grep_count is not None:
+            grep_count, candidates_raw, candidates, selection = data
+            if grep_count is not None and candidates_raw is not None:
                 print(f"\nGrep retrieved: {grep_count} blocks", flush=True)
-                print(f"After dedup: {len(candidates)} blocks", flush=True)
+                sep = "=" * 60
+                print(_color(f"\n{sep}\n  After dedup: {len(candidates)} candidates (from {grep_count} blocks)\n{sep}\n", "\033[1;36m"), flush=True)
+                for c in candidates:
+                    print(_color(f"[{c.block_id}] {c.routine_name} L{c.line_hit}", "\033[1;32m"), flush=True)
+                    print(_color(f"  Block lines {c.line_start}-{c.line_end}:", "\033[2m"), flush=True)
+                    for i, line in enumerate(c.block_text.splitlines(), start=c.line_start):
+                        print(_color(f"    {i:3}: {line}", "\033[2m"), flush=True)
+                    print(flush=True)
             else:
                 print(f"\nBlocks: {len(candidates)} (TAG_LOOKUP)", flush=True)
-            for c in candidates:
-                print(f"\n[{c.block_id}] {c.routine_name} L{c.line_hit}", flush=True)
-                for line in c.block_text.splitlines():
-                    print(f"    {line}", flush=True)
+                for c in candidates:
+                    print(f"\n[{c.block_id}] {c.routine_name} L{c.line_hit}", flush=True)
+                    for line in c.block_text.splitlines():
+                        print(f"    {line}", flush=True)
         elif stage == "answer":
             print("\n--- Answer ---", flush=True)
             print(data, flush=True)

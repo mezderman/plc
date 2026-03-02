@@ -50,6 +50,15 @@ Pipeline flow:
 | **Answer Composer** | Produces a natural-language answer from the selected blocks, main callees context, and tag definitions. |
 | **Judge** | Compares the generated answer to the reference and returns a score (0–100) and comparison table. |
 
+#### Extractor Agent Output
+
+The extractor groups PLC tag names into four roles so grep can find the right routine logic. It infers not only tags mentioned in the question but also tags relevant to answering it (e.g. for “what happens when E-stop is pressed?” it may add outputs that get turned off and states that get set). Only tag names that exist in the tag index are kept; the rest go to `unknown_terms`.
+
+- **inputs** — Physical or HMI inputs the logic reads: sensors, buttons, switches (e.g. `PhotoEye_Fill`, `EmergencyStop`, `HMI_Start_Button`).
+- **outputs** — Signals the logic writes to the field: actuators, lights, valves (e.g. `Conveyor_Run`, `Stack_Light_Red`, `Fill_Valve`).
+- **states** — Internal flags or variables the logic uses (e.g. `Fault_Active`, `Line_Running`, `Box_At_Fill`).
+- **actions** — Tags involved in a commanded action (can overlap with the above); e.g. starting or stopping something.
+
 ### Tools (Deterministic)
 
 | Tool | Role |
@@ -150,8 +159,15 @@ python test/run_pipeline.py 9 anthropic
 ### Other Scripts
 
 ```bash
-# Test extraction + grep (no full pipeline)
-python test/grep_test.py "What does PhotoEye_Fill do?"
+# Run extraction agent in isolation
+python test/extraction_test.py
+python test/extraction_test.py 3              # question #3, default openai
+python test/extraction_test.py 9 anthropic    # question #9, Anthropic
+
+# Run extraction + grep (no full pipeline)
+python test/grep_test.py
+python test/grep_test.py 5              # question #5
+python test/grep_test.py 9 anthropic   # question #9, Anthropic
 
 # Test call graph builder
 python test/test_call_graph_builder.py

@@ -117,7 +117,8 @@ class Pipeline:
             candidates = [tag_block]
             selection = BlockSelectionResult(selected_block_ids=["T1"])
             selected = candidates
-            grep_count = None  # no grep for TAG_LOOKUP
+            grep_count = None
+            candidates_raw = None  # no grep for TAG_LOOKUP
         else:
             candidates_raw = grep_tags(extraction, self._routines_path)
             grep_count = len(candidates_raw)
@@ -126,7 +127,7 @@ class Pipeline:
             selected = candidates
 
         if on_progress:
-            on_progress("candidates", (grep_count, candidates, selection))
+            on_progress("candidates", (grep_count, candidates_raw, candidates, selection))
 
         answer = run_answer_composer(
             question, selected, main_callees_ctx, tag_index=tag_index, intent=extraction.intent

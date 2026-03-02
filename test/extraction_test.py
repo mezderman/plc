@@ -1,11 +1,11 @@
-"""Run extraction then grep: question number or text → extraction → grep → print candidates.
+"""Run extraction agent in isolation. Prints ExtractionResult for a question.
 
 Usage:
-    python test/grep_test.py
-    python test/grep_test.py 5                    # question #5, default openai
-    python test/grep_test.py 9 anthropic          # question #9, Anthropic
-    python test/grep_test.py anthropic 9           # same: provider first
-    python test/grep_test.py "What does PhotoEye_Fill do?"
+    python test/extraction_test.py
+    python test/extraction_test.py 3                    # question #3, default openai
+    python test/extraction_test.py 9 anthropic          # question #9, Anthropic
+    python test/extraction_test.py anthropic 9          # same: provider first
+    python test/extraction_test.py "What does PhotoEye_Fill do?"
 """
 
 import os
@@ -54,26 +54,16 @@ else:
 
 from agents.extraction import run_extraction
 from ingestion.tag_index import load_tag_index_from_json
-from tools.deduplicate_blocks import deduplicate_blocks
-from tools.grep import grep_tags
 from tools.questions_ref import get_question
-
-# ANSI colors for terminal output (disabled when stdout is not a TTY)
-def _color(s: str, codes: str) -> str:
-    return (codes + s + "\033[0m") if sys.stdout.isatty() else s
 
 
 def main() -> None:
     project_root = Path(__file__).resolve().parent.parent
     index_path = project_root / "data" / "tag_index.json"
     questions_path = project_root / "docs" / "questions.md"
-    routines_path = project_root / "docs" / "routines.md"
 
     if not index_path.exists():
         print(f"Error: {index_path} not found. Run ingestion first.")
-        sys.exit(1)
-    if not routines_path.exists():
-        print(f"Error: {routines_path} not found.")
         sys.exit(1)
 
     if not _raw:
@@ -92,39 +82,17 @@ def main() -> None:
 
     print(f"Model: {os.environ.get('LLM', 'openai:gpt-5.1')}\n", flush=True)
 
-    # 1. Run extraction (same as extraction_test)
     tag_index = load_tag_index_from_json(index_path)
-    extraction_result = run_extraction(question, tag_index, tags_source_path=index_path)
+    result = run_extraction(question, tag_index)
 
     print("--- Extraction ---")
-    print(f"Intent: {extraction_result.intent}")
-    print(f"Resolved tags: inputs={extraction_result.resolved_tags.inputs}, "
-          f"outputs={extraction_result.resolved_tags.outputs}, "
-          f"states={extraction_result.resolved_tags.states}, "
-          f"actions={extraction_result.resolved_tags.actions}")
-    if extraction_result.unknown_terms:
-        print(f"Unknown terms: {extraction_result.unknown_terms}")
-
-    # 2. Grep using extraction result
-    candidates_raw = grep_tags(extraction_result, routines_path)
-
-    print(f"\n--- Grep results ({len(candidates_raw)} blocks) ---")
-    for c in candidates_raw:
-        print(f"\n[{c.block_id}] {c.routine_name} line {c.line_hit} (tag: {c.tag})")
-        print(f"  Block lines {c.line_start}-{c.line_end}:")
-        for i, line in enumerate(c.block_text.splitlines(), start=c.line_start):
-            print(f"    {i:3}: {line}")
-
-    # 3. Deduplicate, print final candidates
-    candidates = deduplicate_blocks(candidates_raw)
-    sep = "=" * 60
-    print(_color(f"\n{sep}\n  After dedup: {len(candidates)} candidates (from {len(candidates_raw)} blocks)\n{sep}\n", "\033[1;36m"))
-    for c in candidates:
-        print(_color(f"[{c.block_id}] {c.routine_name} L{c.line_hit}", "\033[1;32m"))
-        print(_color(f"  Block lines {c.line_start}-{c.line_end}:", "\033[2m"))
-        for i, line in enumerate(c.block_text.splitlines(), start=c.line_start):
-            print(_color(f"    {i:3}: {line}", "\033[2m"))
-        print()
+    print(f"Intent: {result.intent}")
+    print(f"Resolved tags: inputs={result.resolved_tags.inputs}, "
+          f"outputs={result.resolved_tags.outputs}, "
+          f"states={result.resolved_tags.states}, "
+          f"actions={result.resolved_tags.actions}")
+    if result.unknown_terms:
+        print(f"Unknown terms: {result.unknown_terms}")
 
 
 if __name__ == "__main__":
