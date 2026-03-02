@@ -171,6 +171,10 @@ python scripts/run_grep.py 9 anthropic   # question #9, Anthropic
 
 # Build and print call graph (from docs/routines.md)
 python scripts/run_call_graph.py
+
+# Run benchmark (all questions 1–10, save judge report to results/)
+python scripts/run_benchmark.py openai
+python scripts/run_benchmark.py anthropic
 ```
 
 ---
@@ -187,7 +191,7 @@ plc_vs/
 ├── docs/                # Project data: tags, routines, questions
 ├── data/                # Generated: tag_index.json
 ├── results/             # Eval runs and benchmark reports
-└── scripts/             # Pipeline runners (run_pipeline, run_extraction, run_grep, run_call_graph, run_evaluation)
+└── scripts/             # Pipeline runners (run_pipeline, run_extraction, run_grep, run_call_graph, run_benchmark)
 ```
 
 ---

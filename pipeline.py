@@ -1,4 +1,4 @@
-"""Run evaluation on all questions 1-10.
+"""Run benchmark on all questions 1–10 (pipeline + judge report to results/).
 
 Usage:
     python pipeline.py openai
@@ -10,5 +10,5 @@ import sys
 from pathlib import Path
 
 if __name__ == "__main__":
-    script = Path(__file__).resolve().parent / "scripts" / "run_evaluation.py"
+    script = Path(__file__).resolve().parent / "scripts" / "run_benchmark.py"
     sys.exit(subprocess.run([sys.executable, str(script)] + sys.argv[1:], check=False).returncode)
