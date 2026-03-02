@@ -1,8 +1,8 @@
 """Run pipeline on all questions 1-10 and save judge evaluation report.
 
 Usage:
-    python test/run_evaluation.py openai
-    python test/run_evaluation.py anthropic
+    python scripts/run_evaluation.py openai
+    python scripts/run_evaluation.py anthropic
 """
 
 import os

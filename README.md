@@ -141,17 +141,17 @@ python -m src.ingestion.tag_index
 
 ```bash
 # Interactive: enter question or question number when prompted
-python test/run_pipeline.py
+python scripts/run_pipeline.py
 
 # Question by number (1–10 from docs/questions.md)
-python test/run_pipeline.py 5
+python scripts/run_pipeline.py 5
 
 # Free-form question
-python test/run_pipeline.py "What color is the stack light in manual mode?"
+python scripts/run_pipeline.py "What color is the stack light in manual mode?"
 
 # Specify model provider: openai (default) or anthropic (either order)
-python test/run_pipeline.py 9 openai
-python test/run_pipeline.py 9 anthropic
+python scripts/run_pipeline.py 9 openai
+python scripts/run_pipeline.py 9 anthropic
 ```
 
 **Arguments:** `[question] [provider]` or `[provider] [question]` — question is a number (1–10) or free text; provider is `openai` or `anthropic`.
@@ -160,17 +160,17 @@ python test/run_pipeline.py 9 anthropic
 
 ```bash
 # Run extraction agent in isolation
-python test/extraction_test.py
-python test/extraction_test.py 3              # question #3, default openai
-python test/extraction_test.py 9 anthropic    # question #9, Anthropic
+python scripts/run_extraction.py
+python scripts/run_extraction.py 3              # question #3, default openai
+python scripts/run_extraction.py 9 anthropic    # question #9, Anthropic
 
 # Run extraction + grep (no full pipeline)
-python test/grep_test.py
-python test/grep_test.py 5              # question #5
-python test/grep_test.py 9 anthropic   # question #9, Anthropic
+python scripts/run_grep.py
+python scripts/run_grep.py 5              # question #5
+python scripts/run_grep.py 9 anthropic   # question #9, Anthropic
 
-# Test call graph builder
-python test/test_call_graph_builder.py
+# Build and print call graph (from docs/routines.md)
+python scripts/run_call_graph.py
 ```
 
 ---
@@ -187,7 +187,7 @@ plc_vs/
 ├── docs/                # Project data: tags, routines, questions
 ├── data/                # Generated: tag_index.json
 ├── results/             # Eval runs and benchmark reports
-└── test/                # Run scripts
+└── scripts/             # Pipeline runners (run_pipeline, run_extraction, run_grep, run_call_graph, run_evaluation)
 ```
 
 ---

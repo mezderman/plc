@@ -1,11 +1,11 @@
 """Run extraction agent in isolation. Prints ExtractionResult for a question.
 
 Usage:
-    python test/extraction_test.py
-    python test/extraction_test.py 3                    # question #3, default openai
-    python test/extraction_test.py 9 anthropic          # question #9, Anthropic
-    python test/extraction_test.py anthropic 9          # same: provider first
-    python test/extraction_test.py "What does PhotoEye_Fill do?"
+    python scripts/run_extraction.py
+    python scripts/run_extraction.py 3                    # question #3, default openai
+    python scripts/run_extraction.py 9 anthropic          # question #9, Anthropic
+    python scripts/run_extraction.py anthropic 9         # same: provider first
+    python scripts/run_extraction.py "What does PhotoEye_Fill do?"
 """
 
 import os

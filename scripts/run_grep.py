@@ -1,11 +1,11 @@
 """Run extraction then grep: question number or text → extraction → grep → print candidates.
 
 Usage:
-    python test/grep_test.py
-    python test/grep_test.py 5                    # question #5, default openai
-    python test/grep_test.py 9 anthropic          # question #9, Anthropic
-    python test/grep_test.py anthropic 9           # same: provider first
-    python test/grep_test.py "What does PhotoEye_Fill do?"
+    python scripts/run_grep.py
+    python scripts/run_grep.py 5                    # question #5, default openai
+    python scripts/run_grep.py 9 anthropic         # question #9, Anthropic
+    python scripts/run_grep.py anthropic 9        # same: provider first
+    python scripts/run_grep.py "What does PhotoEye_Fill do?"
 """
 
 import os
@@ -92,7 +92,7 @@ def main() -> None:
 
     print(f"Model: {os.environ.get('LLM', 'openai:gpt-5.1')}\n", flush=True)
 
-    # 1. Run extraction (same as extraction_test)
+    # 1. Run extraction (same as run_extraction)
     tag_index = load_tag_index_from_json(index_path)
     extraction_result = run_extraction(question, tag_index, tags_source_path=index_path)
 

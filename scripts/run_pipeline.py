@@ -1,11 +1,11 @@
 """Run the full pipeline: question → extract → main_callees → grep/tags_lookup → answer → judge.
 
 Usage:
-    python test/run_pipeline.py
-    python test/run_pipeline.py "What color is the stack light in manual mode?"
-    python test/run_pipeline.py 2              # question #2, default openai
-    python test/run_pipeline.py 9 anthropic   # question #9, Anthropic model
-    python test/run_pipeline.py anthropic 9   # same: provider first, question second
+    python scripts/run_pipeline.py
+    python scripts/run_pipeline.py "What color is the stack light in manual mode?"
+    python scripts/run_pipeline.py 2              # question #2, default openai
+    python scripts/run_pipeline.py 9 anthropic   # question #9, Anthropic model
+    python scripts/run_pipeline.py anthropic 9   # same: provider first, question second
 """
 
 import os
